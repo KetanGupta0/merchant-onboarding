@@ -87,7 +87,7 @@ class MerchantController extends Controller
                 } catch (Exception $e) {
                     return response()->json(['message', $e->getMessage()], 400);
                 }
-                break;
+                // break;
             case 2:
                 $request->validate([
                     'business_name' => 'required',
@@ -125,7 +125,7 @@ class MerchantController extends Controller
                 else {
                     return response()->json(['message' => 'Unable to process business details!'], 400);
                 }
-                break;
+                // break;
             case 3:
                 try {
                     // Define business type
@@ -178,7 +178,7 @@ class MerchantController extends Controller
                 } catch (Exception $exception) {
                     return response()->json(['message' => $exception->getMessage()], 400);
                 }
-                break;
+                // break;
             default:
                 return response()->json(['message' => 'Unknown Step'], 400);
         }
