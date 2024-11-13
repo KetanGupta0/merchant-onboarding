@@ -4,6 +4,7 @@
     <head>
 
         <meta charset="utf-8" />
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Admin Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta content="Admin dashboard" name="description" />
@@ -24,7 +25,12 @@
         <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" />
         <!-- custom Css-->
         <link href="{{ asset('assets/css/custom.min.css') }}" rel="stylesheet" type="text/css" />
+        {{-- <link href="{{ asset('/css/dataTables.dataTables.css') }}" rel="stylesheet" type="text/css" /> --}}
+        <link href="{{ asset('/css/dataTables.bootstrap5.css') }}" rel="stylesheet" type="text/css" />
+
         <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
+        <script src="{{ asset('/js/dataTables.js') }}"></script>
+        <script src="{{ asset('/js/dataTables.bootstrap5.js') }}"></script>
         <script src="{{ asset('/js/sweetalert2@11.js') }}"></script>
 
     </head>

@@ -18,15 +18,27 @@ Route::get('/login',[WebController::class,'loginView']);
 Route::post('/login/submit',[AuthController::class,'loginSubmit']);
 Route::get('/logout',[WebController::class,'logout']);
 
+
 Route::get('/dashboard',[AuthController::class,'navigateToDashboard']);
+
 
 Route::get('/merchant/dashboard',[MerchantController::class,'merchantDashboardView']);
 
+
 Route::get('/admin/dashboard',[AdminController::class,'adminDashboardView']);
+
 Route::get('/admin/merchant/approval',[AdminController::class,'adminMerchantApprovalView']);
+Route::post('/admin/merchant/delete',[AdminController::class,'adminMerchantDeleteAJAX']);
+Route::get('/admin/merchant/fetch',[AdminController::class,'adminMerchantFetchAJAX']);
+Route::post('/admin/merchant/approval-{action}',[AdminController::class,'adminMerchantApprovalAJAX']);
+Route::post('/admin/merchant/view',[AdminController::class,'adminMerchantApprovalAJAX']);
+
 Route::get('/admin/account/details',[AdminController::class,'adminAccountDetailsView']);
+
 Route::get('/admin/url/whitelisting',[AdminController::class,'adminUrlWhitelistingView']);
+
 Route::get('/admin/settings',[AdminController::class,'adminSettingsView']);
+
 Route::get('/admin/logs',[AdminController::class,'adminLogsView']);
 
 
