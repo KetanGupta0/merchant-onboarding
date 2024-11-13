@@ -70,7 +70,8 @@
     <div class="card">
         <h2>Login</h2>
         <form method="POST" action="{{url('login/submit')}}">
-            <input type="email" id="email" name="email" placeholder="Email" required>
+            @csrf
+            <input type="email" id="email" name="email" placeholder="Email" value="{{old('email')}}" required>
             <input type="password" id="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>

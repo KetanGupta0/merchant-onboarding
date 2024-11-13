@@ -25,6 +25,7 @@
         <!-- custom Css-->
         <link href="{{ asset('assets/css/custom.min.css') }}" rel="stylesheet" type="text/css" />
         <script src="{{ asset('/js/jquery-3.7.1.min.js') }}"></script>
+        <script src="{{ asset('/js/sweetalert2@11.js') }}"></script>
 
     </head>
 

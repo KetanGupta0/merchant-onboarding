@@ -2,38 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Log;
+use App\Models\MerchantInfo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class WebController extends Controller
 {
+    private function saveLog($event, $description, $userId = null, $userType = null, $ip = null, $userAgent = null){
+        Log::create([
+            'log_user_id' => $userId,
+            'log_user_type' => $userType,
+            'log_event_type' => $event,
+            'log_description' => $description,
+            'log_ip_address' => $ip,
+            'log_user_agent' => $userAgent,
+        ]);
+    }
     private function page($pagename, $data = []){
         return view('header').view($pagename,$data).view('footer');
     }
-    private function dashboardPage($pagename, $data = []){
-        return view('same.header').view($pagename,$data).view('same.footer');
-    }
+    
     public function homeView(){
         return $this->page('welcome');
     }
     public function loginView(){
+        if(Session::has('is_loggedin')){
+            if(Session::get('is_loggedin')){
+                return redirect()->to('/dashboard');
+            }
+        }
         return $this->page('login');
     }
-    public function adminDashboardView(){
-        return $this->dashboardPage('admin.dashboard');
+
+    public function logout(Request $request){
+        Session::flush();
+        if (Session::has('is_loggedin') && Session::get('is_loggedin') && Session::has('userType') && Session::has('userId')){
+            $this->saveLog(Session::get('userType').' Logout','Logout Successfull.',Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+        }
+        return redirect()->to('/login')->with('success', 'You have been logged out successfully!');
     }
-    public function adminMerchantApprovalView(){
-        return $this->dashboardPage('admin.merchant-approval');
-    }
-    public function adminAccountDetailsView(){
-        return $this->dashboardPage('admin.account-details');
-    }
-    public function adminUrlWhitelistingView(){
-        return $this->dashboardPage('admin.url-whitelist');
-    }
-    public function adminSettingsView(){
-        return $this->dashboardPage('admin.settings');
-    }
-    public function adminLogsView(){
-        return $this->dashboardPage('admin.logs');
-    }
+    
 }
