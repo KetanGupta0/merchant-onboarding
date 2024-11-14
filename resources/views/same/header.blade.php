@@ -10,7 +10,7 @@
         <meta content="Admin dashboard" name="description" />
         <meta content="PurnTech" name="author" />
         <!-- App favicon -->
-        <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
+        <link rel="shortcut icon" href="{{ asset('favicon.svg') }}">
 
         <!-- plugin css -->
         <link href="{{ asset('assets/libs/jsvectormap/css/jsvectormap.min.css') }}" rel="stylesheet" type="text/css" />
@@ -48,19 +48,19 @@
                             <div class="navbar-brand-box horizontal-logo">
                                 <a href="{{ url('/') }}" class="logo logo-dark">
                                     <span class="logo-sm">
-                                        <img src="{{asset('assets/images/logo-sm.png')}}" alt="" height="22">
+                                        <img src="{{asset('favicon.svg')}}" alt="" height="50">
                                     </span>
                                     <span class="logo-lg">
-                                        <img src="{{asset('assets/images/logo-dark.png')}}" alt="" height="17">
+                                        <img src="{{asset('logo.svg')}}" alt="" height="50">
                                     </span>
                                 </a>
 
                                 <a href="{{ url('/') }}" class="logo logo-light">
                                     <span class="logo-sm">
-                                        <img src="{{asset('assets/images/logo-sm.png')}}" alt="" height="22">
+                                        <img src="{{asset('favicon.svg')}}" alt="" height="50">
                                     </span>
                                     <span class="logo-lg">
-                                        <img src="{{asset('assets/images/logo-light.png')}}" alt="" height="17">
+                                        <img src="{{asset('logo.svg')}}" alt="" height="50">
                                     </span>
                                 </a>
                             </div>
@@ -125,19 +125,19 @@
                     <!-- Dark Logo-->
                     <a href="{{ url('/') }}" class="logo logo-dark">
                         <span class="logo-sm">
-                            <img src="{{asset('assets/images/logo-sm.png')}}" alt="" height="22">
+                            <img src="{{asset('favicon.svg')}}" alt="" height="50">
                         </span>
                         <span class="logo-lg">
-                            <img src="{{asset('assets/images/logo-dark.png')}}" alt="" height="17">
+                            <img src="{{asset('logo.svg')}}" alt="" height="50">
                         </span>
                     </a>
                     <!-- Light Logo-->
                     <a href="{{ url('/') }}" class="logo logo-light">
                         <span class="logo-sm">
-                            <img src="{{asset('assets/images/logo-sm.png')}}" alt="" height="22">
+                            <img src="{{asset('favicon.svg')}}" alt="" height="50">
                         </span>
                         <span class="logo-lg">
-                            <img src="{{asset('assets/images/logo-light.png')}}" alt="" height="17">
+                            <img src="{{asset('logo.svg')}}" alt="" height="50">
                         </span>
                     </a>
                     <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
