@@ -79,7 +79,28 @@
         @endif
     });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        @if ($errors->any())
+            let errorMessages = `{!! implode('<br>', $errors->all()) !!}`;
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Errors',
+                html: errorMessages,
+                confirmButtonText: 'OK'
+            });
+        @endif
 
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: "{{ session('success') }}",
+                confirmButtonText: 'OK'
+            });
+        @endif
+    });
+</script>
 </body>
 
 </html>

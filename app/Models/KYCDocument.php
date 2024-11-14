@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class KYCDocument extends Model
 {
     protected $table = 'k_y_c_documents';
-    protected $primaryKey = 'business_id';
+    protected $primaryKey = 'kyc_id';
 
     public $fillable = [
         'kyc_merchant_id',

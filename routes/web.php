@@ -28,10 +28,14 @@ Route::get('/merchant/dashboard',[MerchantController::class,'merchantDashboardVi
 Route::get('/admin/dashboard',[AdminController::class,'adminDashboardView']);
 
 Route::get('/admin/merchant/approval',[AdminController::class,'adminMerchantApprovalView']);
-Route::post('/admin/merchant/delete',[AdminController::class,'adminMerchantDeleteAJAX']);
+Route::get('/admin/merchant/approval/view-{id}',[AdminController::class,'adminMerchantView']);
+Route::post('/admin/merchant/approval/update/merchant-info',[AdminController::class,'adminMerchantInfoUpdate']);
+Route::post('/admin/merchant/approval/update/business-info',[AdminController::class,'adminMerchantBusinessInfoUpdate']);
+Route::post('/admin/merchant/approval/update/kyc-doc',[AdminController::class,'adminMerchantKycDocUpdate']);
+
 Route::get('/admin/merchant/fetch',[AdminController::class,'adminMerchantFetchAJAX']);
+Route::post('/admin/merchant/delete',[AdminController::class,'adminMerchantDeleteAJAX']);
 Route::post('/admin/merchant/approval-{action}',[AdminController::class,'adminMerchantApprovalAJAX']);
-Route::post('/admin/merchant/view',[AdminController::class,'adminMerchantApprovalAJAX']);
 
 Route::get('/admin/account/details',[AdminController::class,'adminAccountDetailsView']);
 

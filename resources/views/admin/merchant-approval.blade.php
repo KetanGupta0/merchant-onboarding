@@ -49,7 +49,7 @@
                                                 <i class="ri-more-fill"></i>
                                             </button>
                                             <ul class="dropdown-menu" style="">
-                                                <li><a class="dropdown-item view" href="javascript:void(0);" data-id="{{ $merchant->merchant_id }}"><i
+                                                <li><a class="dropdown-item view" href="{{url('/admin/merchant/approval/view-')}}{{ $merchant->merchant_id }}"><i
                                                            class="ri-eye-fill text-muted me-2 align-bottom"></i>View</a></li>
                                                 @if ($merchant->merchant_is_verified == 'Not Approved')
                                                     <li><a class="dropdown-item approve" href="javascript:void(0);" data-id="{{ $merchant->merchant_id }}"><i
@@ -123,7 +123,7 @@
                                     <i class="ri-more-fill"></i>
                                 </button>
                                 <ul class="dropdown-menu" style="">
-                                    <li><a class="dropdown-item view" href="javascript:void(0);" data-id="${value.merchant_id}"><i
+                                    <li><a class="dropdown-item view" href="{{url('/admin/merchant/approval/view-')}}${value.merchant_id}"><i
                                                 class="ri-eye-fill text-muted me-2 align-bottom"></i>View</a></li>
                                     ${btn}
                                     <li><a class="dropdown-item delete" href="javascript:void(0);" data-id="${value.merchant_id}"><i
@@ -157,12 +157,12 @@
             searching: true // Enable search functionality
         });
         regenerateMerchantTable();
-        $(document).on('click', '.view', function() {
-            const merchant_id = $(this).attr('data-id');
-            if (!checkBtn(merchant_id)) {
-                return;
-            }
-        });
+        // $(document).on('click', '.view', function() {
+        //     const merchant_id = $(this).attr('data-id');
+        //     if (!checkBtn(merchant_id)) {
+        //         return;
+        //     }
+        // });
         $(document).on('click', '.approve', function() {
             const merchant_id = $(this).attr('data-id');
             if (!checkBtn(merchant_id)) {
