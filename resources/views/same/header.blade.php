@@ -5,7 +5,17 @@
 
         <meta charset="utf-8" />
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Admin Dashboard</title>
+        <title>
+            @if (Session::has('userType'))
+                @if (Session::get('userType') == 'Merchant')
+                    Merchant Dashboard
+                @else
+                    Admin Dashboard
+                @endif
+            @else
+                Dashboard
+            @endif
+        </title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta content="Admin dashboard" name="description" />
         <meta content="PurnTech" name="author" />
@@ -93,10 +103,20 @@
                                 <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">
                                     <span class="d-flex align-items-center">
-                                        @if(Session::get('userPic'))
-                                            <img class="rounded-circle header-profile-user" src="{{asset('uploads/admin/profile')}}/{{Session::get('userPic')}}" alt="Header Avatar">
-                                        @else
-                                            <img class="rounded-circle header-profile-user" src="{{asset('assets/images/users/avatar-1.jpg')}}" alt="Header Avatar">
+                                        @if(Session::has('userType'))
+                                            @if (Session::get('userType') != 'Merchant')
+                                                @if(Session::get('userPic'))
+                                                    <img class="rounded-circle header-profile-user" src="{{asset('uploads/admin/profile')}}/{{Session::get('userPic')}}" alt="Header Avatar">
+                                                @else
+                                                    <img class="rounded-circle header-profile-user" src="{{asset('assets/images/users/avatar-1.jpg')}}" alt="Header Avatar">
+                                                @endif
+                                            @else
+                                                @if(Session::get('userPic'))
+                                                    <img class="rounded-circle header-profile-user" src="{{asset('uploads/merchant/profile')}}/{{Session::get('userPic')}}" alt="Header Avatar">
+                                                @else
+                                                    <img class="rounded-circle header-profile-user" src="{{asset('assets/images/users/avatar-1.jpg')}}" alt="Header Avatar">
+                                                @endif
+                                            @endif
                                         @endif
                                         <span class="text-start ms-xl-2">
                                             <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{Session::get('userName')}}</span>
@@ -107,15 +127,29 @@
                                 <div class="dropdown-menu dropdown-menu-end">
                                     <!-- item-->
                                     <h6 class="dropdown-header">Welcome {{Session::get('userName')}}!</h6>
-                                    <a class="dropdown-item" href="{{url('admin/settings')}}">
-                                        <span class="badge bg-success-subtle text-success mt-1 float-end">New</span>
-                                        <i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> 
-                                        <span class="align-middle">Settings</span>
-                                    </a>
-                                    <a class="dropdown-item" href="{{url('logout')}}">
-                                        <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i>
-                                        <span class="align-middle" data-key="t-logout">Logout</span>
-                                    </a>
+                                    @if(Session::has('userType'))
+                                        @if (Session::get('userType') != 'Merchant')
+                                            <a class="dropdown-item" href="{{url('admin/settings')}}">
+                                                <span class="badge bg-success-subtle text-success mt-1 float-end">New</span>
+                                                <i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> 
+                                                <span class="align-middle">Settings</span>
+                                            </a>
+                                            <a class="dropdown-item" href="{{url('logout')}}">
+                                                <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i>
+                                                <span class="align-middle" data-key="t-logout">Logout</span>
+                                            </a>
+                                        @else
+                                            <a class="dropdown-item" href="{{url('merchant/settings')}}">
+                                                <span class="badge bg-success-subtle text-success mt-1 float-end">New</span>
+                                                <i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> 
+                                                <span class="align-middle">Settings</span>
+                                            </a>
+                                            <a class="dropdown-item" href="{{url('logout')}}">
+                                                <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i>
+                                                <span class="align-middle" data-key="t-logout">Logout</span>
+                                            </a>
+                                        @endif
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -154,50 +188,94 @@
 
                         <div id="two-column-menu">
                         </div>
-                        <ul class="navbar-nav" id="navbar-nav">
-                            <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link dashboard  {{ Request::is('admin/dashboard') ? 'active' : '' }}" href="{{url('admin/dashboard')}}">
-                                    <i class="mdi mdi-monitor-dashboard"></i> <span data-key="t-widgets">Dashboard</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link  {{ Request::is('admin/merchant/approval') ? 'active' : '' }}" href="{{url('admin/merchant/approval')}}">
-                                    <i class="mdi mdi-account-check"></i> <span data-key="t-widgets">Merchant Approval</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link  {{ Request::is('admin/account/details') ? 'active' : '' }}" href="{{url('admin/account/details')}}">
-                                    <i class="mdi mdi-bank-check"></i> <span data-key="t-widgets">Account Details</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link  {{ Request::is('admin/url/whitelisting') ? 'active' : '' }}" href="{{url('admin/url/whitelisting')}}">
-                                    <i class="mdi mdi-web-check"></i> <span data-key="t-widgets">URL Whitelisting</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link  {{ Request::is('/admin/settlement/report') ? 'active' : '' }}" href="{{url('/admin/settlement/report')}}">
-                                    <i class="bx bx-notepad"></i> <span data-key="t-widgets">Settlement Report</span>
-                                </a>
-                            </li>
-                            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Other</span></li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link  {{ Request::is('admin/settings') ? 'active' : '' }}" href="{{url('admin/settings')}}">
-                                    <i class="ri-settings-5-line"></i> <span data-key="t-widgets">Settings</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link  {{ Request::is('admin/logs') ? 'active' : '' }}" href="{{url('admin/logs')}}">
-                                    <i class="bx bx-notepad"></i> <span data-key="t-widgets">Logs</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link menu-link" href="{{url('logout')}}">
-                                    <i class="bx bx-power-off"></i> <span data-key="t-widgets">Logout</span>
-                                </a>
-                            </li>
-                        </ul>
+                        @if(Session::has('userType'))
+                            @if (Session::get('userType') != 'Merchant')
+                                <ul class="navbar-nav" id="navbar-nav">
+                                    <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link dashboard  {{ Request::is('admin/dashboard') ? 'active' : '' }}" href="{{url('admin/dashboard')}}">
+                                            <i class="mdi mdi-monitor-dashboard"></i> <span data-key="t-widgets">Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('admin/merchant/approval') ? 'active' : '' }}" href="{{url('admin/merchant/approval')}}">
+                                            <i class="mdi mdi-account-check"></i> <span data-key="t-widgets">Merchant Approval</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('admin/account/details') ? 'active' : '' }}" href="{{url('admin/account/details')}}">
+                                            <i class="mdi mdi-bank-check"></i> <span data-key="t-widgets">Account Details</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('admin/url/whitelisting') ? 'active' : '' }}" href="{{url('admin/url/whitelisting')}}">
+                                            <i class="mdi mdi-web-check"></i> <span data-key="t-widgets">URL Whitelisting</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('/admin/settlement/report') ? 'active' : '' }}" href="{{url('/admin/settlement/report')}}">
+                                            <i class="bx bx-notepad"></i> <span data-key="t-widgets">Settlement Report</span>
+                                        </a>
+                                    </li>
+                                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Other</span></li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('admin/settings') ? 'active' : '' }}" href="{{url('admin/settings')}}">
+                                            <i class="ri-settings-5-line"></i> <span data-key="t-widgets">Settings</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('admin/logs') ? 'active' : '' }}" href="{{url('admin/logs')}}">
+                                            <i class="bx bx-notepad"></i> <span data-key="t-widgets">Logs</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link" href="{{url('logout')}}">
+                                            <i class="bx bx-power-off"></i> <span data-key="t-widgets">Logout</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            @else
+                                <ul class="navbar-nav" id="navbar-nav">
+                                    <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link dashboard  {{ Request::is('merchant/dashboard') ? 'active' : '' }}" href="{{url('merchant/dashboard')}}">
+                                            <i class="mdi mdi-monitor-dashboard"></i> <span data-key="t-widgets">Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('merchant/account/details') ? 'active' : '' }}" href="{{url('merchant/account/details')}}">
+                                            <i class="mdi mdi-bank-check"></i> <span data-key="t-widgets">Account Details</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('merchant/url/whitelisting') ? 'active' : '' }}" href="{{url('merchant/url/whitelisting')}}">
+                                            <i class="mdi mdi-web-check"></i> <span data-key="t-widgets">URL Whitelisting</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('/merchant/settlement/report') ? 'active' : '' }}" href="{{url('/merchant/settlement/report')}}">
+                                            <i class="bx bx-notepad"></i> <span data-key="t-widgets">Settlement Report</span>
+                                        </a>
+                                    </li>
+                                    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Other</span></li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('merchant/settings') ? 'active' : '' }}" href="{{url('merchant/settings')}}">
+                                            <i class="ri-settings-5-line"></i> <span data-key="t-widgets">Settings</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link  {{ Request::is('merchant/logs') ? 'active' : '' }}" href="{{url('merchant/logs')}}">
+                                            <i class="bx bx-notepad"></i> <span data-key="t-widgets">Logs</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link menu-link" href="{{url('logout')}}">
+                                            <i class="bx bx-power-off"></i> <span data-key="t-widgets">Logout</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            @endif
+                        @endif
                     </div>
                     <!-- Sidebar -->
                 </div>

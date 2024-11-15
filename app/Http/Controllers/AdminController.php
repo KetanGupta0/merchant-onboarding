@@ -15,10 +15,10 @@ use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
-    private function saveLog($event, $description, $userId = null, $userType = null, $ip = null, $userAgent = null){
+    private function saveLog($event, $description, $ip = null, $userAgent = null){
         Log::create([
-            'log_user_id' => $userId,
-            'log_user_type' => $userType,
+            'log_user_id' => Session::get('userId'),
+            'log_user_type' => Session::get('userType'),
             'log_event_type' => $event,
             'log_description' => $description,
             'log_ip_address' => $ip,
@@ -27,7 +27,7 @@ class AdminController extends Controller
     }
     private function checkLoginStatus()
     {
-        if (Session::has('is_loggedin') && Session::get('is_loggedin')) {
+        if (Session::has('is_loggedin') && Session::has('userType') && Session::get('is_loggedin') && (Session::get('userType') != 'Merchant')) {
             return true;
         }
         else {
@@ -71,7 +71,7 @@ class AdminController extends Controller
                             'deleted merchant' => $merchant,
                             'message' => 'Merchant '.$merchant->merchant_name.' Deleted successfully'
                         ];
-                        $this->saveLog(event: 'Merchant Deleted',description: json_encode($logDescription), userId: Session::get('userId'), userType: Session::get('userType'), ip:$request->ip(), userAgent:$request->userAgent());
+                        $this->saveLog(event: 'Merchant Deleted',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
                         return response()->json(true);
                     }else{
                         return response()->json(false);
@@ -84,7 +84,7 @@ class AdminController extends Controller
                 $logDescription = [
                     'message' => $e->getMessage()
                 ];
-                $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+                $this->saveLog('Exception',json_encode($logDescription), $request->ip(),$request->userAgent());
                 return response()->json(['message' => 'Something went wrong! Please check the log for more details.'], 400);
             }
         }
@@ -134,8 +134,8 @@ class AdminController extends Controller
                     default: return response()->json(['message'=>'URL not found!'],404);
                 }
                 if($merchant->save()){
-                    $this->saveLog(event: 'Merchant Approval',description: json_encode($logDescription), userId: Session::get('userId'), userType: Session::get('userType'), ip:$request->ip(), userAgent:$request->userAgent());
-                    return response()->json(true);
+                    $this->saveLog(event: 'Merchant Approval',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
+                    return response()->json(data: true);
                 }else{
                     return response()->json(false);
                 }
@@ -147,7 +147,7 @@ class AdminController extends Controller
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+            $this->saveLog('Merchant Approval Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
             return response()->json(['message' => 'Something went wrong! Please check the log for more details.'], 400);
         }
     }
@@ -170,7 +170,7 @@ class AdminController extends Controller
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+            $this->saveLog('Merchant View Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
             return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
         }
     }
@@ -233,7 +233,7 @@ class AdminController extends Controller
                         'presentInfo' => $merchant,
                         'message' => 'Merchant info updated successfully!'
                     ];
-                    $this->saveLog(event: 'Merchant Info Update',description: json_encode($logDescription), userId: Session::get('userId'), userType: Session::get('userType'), ip:$request->ip(), userAgent:$request->userAgent());
+                    $this->saveLog(event: 'Merchant Info Update',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
                     return redirect()->back()->with('success','Merchant info updated successfully!');
                 }else{
                     return redirect()->back()->with('error','Unable to update merchant info right now!');
@@ -245,7 +245,7 @@ class AdminController extends Controller
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+            $this->saveLog('Merchant Info Update Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
             return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
         }
     }
@@ -299,7 +299,7 @@ class AdminController extends Controller
                         'presentInfo' => $business,
                         'message' => 'Business info updated successfully!'
                     ];
-                    $this->saveLog(event: 'Merchant Business Info Update',description: json_encode($logDescription), userId: Session::get('userId'), userType: Session::get('userType'), ip:$request->ip(), userAgent:$request->userAgent());
+                    $this->saveLog(event: 'Merchant Business Info Update',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
                     return redirect()->back()->with('success','Business info updated successfully!');
                 }else{
                     return redirect()->back()->with('error','Unable to update business info right now!');
@@ -311,7 +311,7 @@ class AdminController extends Controller
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+            $this->saveLog('Merchant Business Info Update Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
             return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
         }
     }
@@ -363,7 +363,7 @@ class AdminController extends Controller
                             'presentInfo' => $kycDocument,
                             'message' => 'KYC Document updated successfully!'
                         ];
-                        $this->saveLog(event: 'Merchant KYC Docuemnt Update',description: json_encode($logDescription), userId: Session::get('userId'), userType: Session::get('userType'), ip:$request->ip(), userAgent:$request->userAgent());
+                        $this->saveLog(event: 'Merchant KYC Docuemnt Update',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
                         return redirect()->back()->with('success','KYC Document updated successfully!');
                     }else{
                         return redirect()->back()->with('error','Unable to update KYC Document right now!');
@@ -376,7 +376,7 @@ class AdminController extends Controller
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+            $this->saveLog('Merchant KYC Docuemnt Update Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
             return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
         }
     }
@@ -471,28 +471,28 @@ class AdminController extends Controller
                             'presentInfo' => $admin,
                             'message' => 'Profile updated successfully!'
                         ];
-                        $this->saveLog('Admin Profile Update',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+                        $this->saveLog('Admin Profile Update',json_encode($logDescription), $request->ip(),$request->userAgent());
                         return redirect()->back()->with('success','Profile updated successfully!');
                     }
                 }else{
                     $logDescription = [
                         'message' => 'Password is wrong!'
                     ];
-                    $this->saveLog('Admin Profile Update',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+                    $this->saveLog('Admin Profile Update',json_encode($logDescription), $request->ip(), $request->userAgent());
                     return redirect()->back()->with('error','Password is wrong!');
                 }
             }else{
                 $logDescription = [
                     'message' => 'Admin not found!'
                 ];
-                $this->saveLog('Admin Profile Update',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+                $this->saveLog('Admin Profile Update',json_encode($logDescription), $request->ip(),$request->userAgent());
                 return redirect()->back()->with('error','Admin not found!');
             }
         }catch(Exception $e){
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Exception',json_encode($logDescription),Session::get('userId'),Session::get('userType'),$request->ip(),$request->userAgent());
+            $this->saveLog('Admin Profile Update Exception',json_encode($logDescription), $request->ip(),$request->userAgent());
             return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
         }
     }

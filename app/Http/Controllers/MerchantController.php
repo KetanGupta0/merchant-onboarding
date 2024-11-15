@@ -4,13 +4,71 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessDetail;
 use App\Models\KYCDocument;
+use App\Models\Log;
 use App\Models\MerchantInfo;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 
 class MerchantController extends Controller
 {
+    private function saveLog($event, $description, $ip = null, $userAgent = null){
+        Log::create([
+            'log_user_id' => Session::get('userId'),
+            'log_user_type' => Session::get('userType'),
+            'log_event_type' => $event,
+            'log_description' => $description,
+            'log_ip_address' => $ip,
+            'log_user_agent' => $userAgent,
+        ]);
+    }
+    private function checkLoginStatus()
+    {
+        if (Session::has('is_loggedin') && Session::has('userType') && Session::get('is_loggedin') && (Session::get('userType') == 'Merchant')) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    private function dashboardPage($pagename, $data = [])
+    {
+        if ($this->checkLoginStatus()) {
+            return view('same.header') . view($pagename, $data) . view('same.footer');
+        }
+        else {
+            return redirect()->to('/login')->with('error', 'Login is required!');
+        }
+    }
+
+    public function merchantDashboardView()
+    {
+        return $this->dashboardPage('merchant.dashboard');
+    }
+    public function merchantAccountDetailsView()
+    {
+        return $this->dashboardPage('merchant.account-details');
+    }
+    public function merchantUrlWhitelistingView()
+    {
+        return $this->dashboardPage('merchant.url-white-listing');
+    }
+    public function merchantSettlementReportsView()
+    {
+        return $this->dashboardPage('merchant.settlement-report');
+    }
+    public function merchantSettingsView()
+    {
+        return $this->dashboardPage('merchant.settings');
+    }
+    public function merchantLogsView()
+    {
+        $logs = Log::where('log_user_id','=',Session::get('userId'))->where('log_user_type','=',Session::get('userType'))->orderBy('created_at','desc')->get();
+        return $this->dashboardPage('merchant.logs',compact('logs'));
+    }
+
+    // File Break
     private function page($pagename, $data = [])
     {
         return view('header') . view($pagename, $data) . view('footer');

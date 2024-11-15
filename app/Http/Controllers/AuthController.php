@@ -12,10 +12,10 @@ use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
-    private function saveLog($event, $description, $userId = null, $userType = null, $ip = null, $userAgent = null){
+    private function saveLog($event, $description, $ip = null, $userAgent = null){
         Log::create([
-            'log_user_id' => $userId,
-            'log_user_type' => $userType,
+            'log_user_id' => Session::get('userId'),
+            'log_user_type' => Session::get('userType'),
             'log_event_type' => $event,
             'log_description' => $description,
             'log_ip_address' => $ip,
@@ -61,13 +61,13 @@ class AuthController extends Controller
                 $logDescription = [
                     'message' => 'Login Success'
                 ];
-                $this->saveLog('Login Success',json_encode($logDescription), $type == 'Merchant' ? $user->merchant_id : $user->admin_id, $type, ip:$request->ip(), userAgent:$request->userAgent());
+                $this->saveLog('Login Success',json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
                 return redirect()->to('/dashboard')->with('success', 'Login successful!');
             }
             $logDescription = [
                 'message' => "Email: ".$request->email.' & Password: '.$request->password.'. Password is incorrect!'
             ];
-            $this->saveLog(event: 'Login Failed',description: json_encode($logDescription), userId: $type == 'Merchant' ? $user->merchant_id : $user->admin_id, userType: $type, ip:$request->ip(), userAgent:$request->userAgent());
+            $this->saveLog(event: 'Login Failed',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
             return redirect()->back()->with('error', 'Email or password is incorrect!');
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'An error occurred: ' . $e->getMessage());
