@@ -93,16 +93,20 @@
                                 <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">
                                     <span class="d-flex align-items-center">
-                                        <img class="rounded-circle header-profile-user" src="{{asset('assets/images/users/avatar-1.jpg')}}" alt="Header Avatar">
+                                        @if(Session::get('userPic'))
+                                            <img class="rounded-circle header-profile-user" src="{{asset('uploads/admin/profile')}}/{{Session::get('userPic')}}" alt="Header Avatar">
+                                        @else
+                                            <img class="rounded-circle header-profile-user" src="{{asset('assets/images/users/avatar-1.jpg')}}" alt="Header Avatar">
+                                        @endif
                                         <span class="text-start ms-xl-2">
-                                            <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">Anna Adame</span>
-                                            <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Founder</span>
+                                            <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{Session::get('userName')}}</span>
+                                            <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">{{Session::get('userType')}}</span>
                                         </span>
                                     </span>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-end">
                                     <!-- item-->
-                                    <h6 class="dropdown-header">Welcome Anna!</h6>
+                                    <h6 class="dropdown-header">Welcome {{Session::get('userName')}}!</h6>
                                     <a class="dropdown-item" href="{{url('admin/settings')}}">
                                         <span class="badge bg-success-subtle text-success mt-1 float-end">New</span>
                                         <i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> 
@@ -170,6 +174,11 @@
                             <li class="nav-item">
                                 <a class="nav-link menu-link  {{ Request::is('admin/url/whitelisting') ? 'active' : '' }}" href="{{url('admin/url/whitelisting')}}">
                                     <i class="mdi mdi-web-check"></i> <span data-key="t-widgets">URL Whitelisting</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link menu-link  {{ Request::is('/admin/settlement/report') ? 'active' : '' }}" href="{{url('/admin/settlement/report')}}">
+                                    <i class="bx bx-notepad"></i> <span data-key="t-widgets">Settlement Report</span>
                                 </a>
                             </li>
                             <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Other</span></li>

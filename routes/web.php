@@ -40,8 +40,10 @@ Route::post('/admin/merchant/approval-{action}',[AdminController::class,'adminMe
 Route::get('/admin/account/details',[AdminController::class,'adminAccountDetailsView']);
 
 Route::get('/admin/url/whitelisting',[AdminController::class,'adminUrlWhitelistingView']);
+Route::get('/admin/settlement/report',[AdminController::class,'adminSettlementReportsView']);
 
 Route::get('/admin/settings',[AdminController::class,'adminSettingsView']);
+Route::post('/admin/settings/update-admin',[AdminController::class,'adminSettingsUpdateAdmin']);
 
 Route::get('/admin/logs',[AdminController::class,'adminLogsView']);
 

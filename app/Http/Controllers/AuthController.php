@@ -41,8 +41,10 @@ class AuthController extends Controller
             if (!$user) {
                 $user = MerchantInfo::where('merchant_email', $request->email)->where('merchant_status', '!=', 'Deleted')->first();
                 if (!$user) {
-                    $logDescription = "Email: ".$request->email.' & Password: '.$request->password.'. No such user found!';
-                    $this->saveLog('Login Failed',$logDescription, ip:$request->ip(), userAgent:$request->userAgent());
+                    $logDescription = [
+                        'message' => "Email: ".$request->email.' & Password: '.$request->password.'. No such user found!'
+                    ];
+                    $this->saveLog('Login Failed',json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
                     return redirect()->back()->with('error', 'Email or password is incorrect!');
                 }
             }
@@ -54,12 +56,18 @@ class AuthController extends Controller
                     'userType' => $type,
                     'userId' => $type == 'Merchant' ? $user->merchant_id : $user->admin_id,
                     'userName' => $type == 'Merchant' ? $user->merchant_name : $user->admin_name,
+                    'userPic' => $type == 'Merchant' ? $user->merchant_profile : $user->admin_profile_pic,
                 ]);
-                $this->saveLog('Login Success',"Email: ".$request->email, $type == 'Merchant' ? $user->merchant_id : $user->admin_id, $type, ip:$request->ip(), userAgent:$request->userAgent());
+                $logDescription = [
+                    'message' => 'Login Success'
+                ];
+                $this->saveLog('Login Success',json_encode($logDescription), $type == 'Merchant' ? $user->merchant_id : $user->admin_id, $type, ip:$request->ip(), userAgent:$request->userAgent());
                 return redirect()->to('/dashboard')->with('success', 'Login successful!');
             }
-            $logDescription = "Email: ".$request->email.' & Password: '.$request->password.'. Password is incorrect!';
-            $this->saveLog(event: 'Login Failed',description: $logDescription, userId: $type == 'Merchant' ? $user->merchant_id : $user->admin_id, userType: $type, ip:$request->ip(), userAgent:$request->userAgent());
+            $logDescription = [
+                'message' => "Email: ".$request->email.' & Password: '.$request->password.'. Password is incorrect!'
+            ];
+            $this->saveLog(event: 'Login Failed',description: json_encode($logDescription), userId: $type == 'Merchant' ? $user->merchant_id : $user->admin_id, userType: $type, ip:$request->ip(), userAgent:$request->userAgent());
             return redirect()->back()->with('error', 'Email or password is incorrect!');
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'An error occurred: ' . $e->getMessage());
