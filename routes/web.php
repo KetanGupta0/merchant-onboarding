@@ -25,6 +25,8 @@ Route::get('/dashboard',[AuthController::class,'navigateToDashboard']);
 Route::get('/merchant/dashboard',[MerchantController::class,'merchantDashboardView']);
 
 Route::get('/merchant/account/details',[MerchantController::class,'merchantAccountDetailsView']);
+Route::post('/merchant/account/details/update',[MerchantController::class,'merchantAccountDetailsUpdate']);
+
 Route::get('/merchant/url/whitelisting',[MerchantController::class,'merchantUrlWhitelistingView']);
 Route::get('/merchant/settlement/report',[MerchantController::class,'merchantSettlementReportsView']);
 Route::get('/merchant/settings',[MerchantController::class,'merchantSettingsView']);

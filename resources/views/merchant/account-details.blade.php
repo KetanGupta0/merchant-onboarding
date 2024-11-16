@@ -14,3 +14,67 @@
     </div>
 </div>
 <!-- end page title -->
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <form action="{{url('/merchant/account/details/update')}}" method="post">
+                @csrf
+                <input type="hidden" name="merchant_id" value="{{Session::get('userId')}}">
+                <input type="hidden" name="business_id" value="@isset($account){{$account->acc_business_id}}@endisset">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <input type="text" name="acc_bank_name" id="acc_bank_name" class="form-control" value="@isset($account){{$account->acc_bank_name}}@endisset" placeholder="Bank Name">
+                            <label for="acc_bank_name">Bank Name <span class="text-danger">*</span></label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <input type="text" name="acc_branch_name" id="acc_branch_name" class="form-control" value="@isset($account){{$account->acc_branch_name}}@endisset" placeholder="Branch Name">
+                            <label for="acc_branch_name">Branch Name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <div class="form-floating">
+                            <input type="text" name="acc_account_number" id="acc_account_number" class="form-control" value="@isset($account){{$account->acc_account_number }}@endisset" placeholder="Account Number">
+                            <label for="acc_account_number">Account Number <span class="text-danger">*</span></label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <input type="text" name="acc_ifsc_code" id="acc_ifsc_code" class="form-control" value="@isset($account){{$account->acc_ifsc_code}}@endisset" placeholder="IFSC Code">
+                            <label for="acc_ifsc_code">IFSC Code <span class="text-danger">*</span></label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <input type="text" name="acc_micr_code" id="acc_micr_code" class="form-control" value="@isset($account){{$account->acc_micr_code}}@endisset" placeholder="MICR Code">
+                            <label for="acc_micr_code">MICR Code</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <input type="text" name="acc_swift_code" id="acc_swift_code" class="form-control" value="@isset($account){{$account->acc_swift_code}}@endisset" placeholder="Swift Code">
+                            <label for="acc_swift_code">Swift Code</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <select name="acc_account_type" id="acc_account_type" class="form-control">
+                                <option value="">Select</option>
+                                <option value="Business" @isset($account) {{$account->acc_account_type == "Business" ? "selected" : ""}} @endisset>Business</option>
+                                <option value="Current" @isset($account) {{$account->acc_account_type == "Current" ? "selected" : ""}} @endisset>Current</option>
+                                <option value="Savings" @isset($account) {{$account->acc_account_type == "Savings" ? "selected" : ""}} @endisset>Savings</option>
+                                <option value="Other" @isset($account) {{$account->acc_account_type == "Other" ? "selected" : ""}} @endisset>Other</option>
+                            </select>
+                            <label for="acc_account_type">Account Type <span class="text-danger">*</span></label>
+                        </div>
+                    </div>
+                    <div class="col-md-12 text-end">
+                        <input type="submit" value="Save/Update" class="btn btn-primary rounded-pill">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -253,7 +253,7 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link menu-link  {{ Request::is('/merchant/settlement/report') ? 'active' : '' }}" href="{{url('/merchant/settlement/report')}}">
+                                        <a class="nav-link menu-link  {{ Request::is('merchant/settlement/report') ? 'active' : '' }}" href="{{url('/merchant/settlement/report')}}">
                                             <i class="bx bx-notepad"></i> <span data-key="t-widgets">Settlement Report</span>
                                         </a>
                                     </li>
