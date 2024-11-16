@@ -188,6 +188,7 @@ class AdminController extends Controller
             'merchant_is_verified' => 'required|in:Approved,Not Approved',
             'merchant_status' => 'required|in:Active,Blocked',
             'merchant_id' => 'required|numeric',
+            'merchant_zip' => 'nullable|numeric|digits:6'
         ], [
             'merchant_name.required' => 'Please enter the merchant name.',
             'merchant_email.required' => 'Please enter the merchant email address.',
@@ -209,6 +210,8 @@ class AdminController extends Controller
             'merchant_status.in' => 'Invalid value selected for merchant status.',
             'merchant_id.required' => 'Someting went wrong!',
             'merchant_id.numeric' => 'Someting went wrong!',
+            'merchant_zip.numeric' => 'The zip code should contain only numbers.',
+            'merchant_zip.digits' => 'The zip code must be exactly 6 digits.',
         ]);
     
         if ($validator->fails()) {
@@ -227,6 +230,11 @@ class AdminController extends Controller
                 $merchant->merchant_is_onboarded = $request->merchant_is_onboarded;
                 $merchant->merchant_is_verified = $request->merchant_is_verified;
                 $merchant->merchant_status = $request->merchant_status;
+                $merchant->merchant_city = $request->merchant_city;
+                $merchant->merchant_state = $request->merchant_state;
+                $merchant->merchant_country = $request->merchant_country;
+                $merchant->merchant_zip = $request->merchant_zip;
+                $merchant->merchant_landmark = $request->merchant_landmark;
                 if($merchant->save()){
                     $logDescription = [
                         'pastInfo' => $temp,

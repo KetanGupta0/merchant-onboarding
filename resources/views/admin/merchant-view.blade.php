@@ -66,6 +66,36 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <div class="form-floating">
+                                <input type="text" name="merchant_city" id="merchant_city" class="form-control" placeholder="Merchant City" value="{{ $merchant->merchant_city }}">
+                                <label for="merchant_city">Merchant City <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="merchant_state" id="merchant_state" class="form-control" placeholder="Merchant State" value="{{ $merchant->merchant_state }}">
+                                <label for="merchant_state">Merchant State <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="merchant_country" id="merchant_country" class="form-control" placeholder="Merchant Country" value="{{ !$merchant->merchant_country ? "India" : $merchant->merchant_country }}">
+                                <label for="merchant_country">Merchant Country <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="merchant_zip" id="merchant_zip" class="form-control" placeholder="Merchant Zip Code" value="{{ $merchant->merchant_zip }}">
+                                <label for="merchant_zip">Merchant Zip Code <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="merchant_landmark" id="merchant_landmark" class="form-control" placeholder="Merchant Landmark" value="{{ $merchant->merchant_landmark }}">
+                                <label for="merchant_landmark">Merchant Landmark <span class="text-danger">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-floating">
                                 <select name="merchant_is_onboarded" id="merchant_is_onboarded" class="form-control" aria-placeholder="Merchant Onboarding Completed">
                                     <option value="">Select</option>
                                     <option value="No" {{ $merchant->merchant_is_onboarded == 'No' ? 'selected' : '' }}>No</option>

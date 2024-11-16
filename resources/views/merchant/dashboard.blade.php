@@ -14,6 +14,19 @@
     </div>
 </div>
 <!-- end page title -->
+@isset($merchant)
+    @if ($merchant->merchant_is_verified == 'Approved')
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Your account is approved!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @else
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            Your account is not approved!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+@endisset
 <div class="row">
     <div class="col-xxl-5">
         <div class="d-flex flex-column h-100">
@@ -43,7 +56,7 @@
                                 </div>
                                 <div class="col-sm-4">
                                     <div class="px-3">
-                                        <img src="{{asset('assets/images/user-illustarator-2.png')}}" class="img-fluid" alt="">
+                                        <img src="{{ asset('assets/images/user-illustarator-2.png') }}" class="img-fluid" alt="">
                                     </div>
                                 </div>
                             </div>

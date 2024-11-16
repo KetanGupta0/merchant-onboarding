@@ -44,7 +44,8 @@ class MerchantController extends Controller
 
     public function merchantDashboardView()
     {
-        return $this->dashboardPage('merchant.dashboard');
+        $merchant = MerchantInfo::select('merchant_is_verified')->find(Session::get('userId'));
+        return $this->dashboardPage('merchant.dashboard',compact('merchant'));
     }
     public function merchantAccountDetailsView()
     {
@@ -60,7 +61,89 @@ class MerchantController extends Controller
     }
     public function merchantSettingsView()
     {
-        return $this->dashboardPage('merchant.settings');
+        $merchant = MerchantInfo::find(Session::get('userId'));
+        return $this->dashboardPage('merchant.settings',compact('merchant'));
+    }
+    public function merchantSettingsUpdate(Request $request)
+    {
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('/login')->with('error', 'Login is required!');
+        }
+        $request->validate([
+            'merchant_phone2' => 'nullable|numeric|digits:10',
+            'merchant_zip' => 'nullable|numeric|digits:6',
+            'merchant_profile' => 'nullable|mimes:png,jpg,jpeg,gif,svg,bmp|max:2048',
+            'merchant_password' => 'required', // Old password
+            'merchant_password_new' => 'nullable|min:8|different:merchant_password', // New password must be different
+            'merchant_password_new_confirmed' => 'required_with:merchant_password_new|same:merchant_password_new',
+        ], [
+            'merchant_phone2.numeric' => 'The alternate phone number must be a numeric value.',
+            'merchant_phone2.digits' => 'The alternate phone number must be exactly 10 digits.',
+            'merchant_zip.numeric' => 'The zip code must be a numeric value.',
+            'merchant_zip.digits' => 'The zip code must be exactly 6 digits.',
+            'merchant_profile.mimes' => 'The profile picture must be of type: PNG, JPG, JPEG, GIF, SVG, or BMP.',
+            'merchant_profile.max' => 'The profile picture size must not exceed 2MB.',
+            'merchant_password.required' => 'The old password is required.',
+            'merchant_password_new.min' => 'The new password must be at least 8 characters.',
+            'merchant_password_new.different' => 'The new password must be different from the old password.',
+            'merchant_password_new_confirmed.required_with' => 'Please confirm the new password.',
+            'merchant_password_new_confirmed.same' => 'The new password confirmation does not match.',
+        ]);
+              
+        try{
+            $merchant = MerchantInfo::find(Session::get('userId'));
+            if($merchant){
+                if(!Hash::check($request->merchant_password,$merchant->merchant_password)){
+                    return redirect()->back()->with('error','Password is not correct!');
+                }
+                $temp = $merchant->replicate(['merchant_plain_password','merchant_password']);
+                if ($request->hasFile('merchant_profile')) {
+                    $file = $request->file('merchant_profile');
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $file->move(public_path('uploads/merchant/profile'), $filename);
+                    $merchant->merchant_profile = $filename;
+                }
+                $merchant->merchant_phone2 = $request->merchant_phone2;
+                $merchant->merchant_city = $request->merchant_city;
+                $merchant->merchant_state = $request->merchant_state;
+                $merchant->merchant_country = $request->merchant_country;
+                $merchant->merchant_zip = $request->merchant_zip;
+                $merchant->merchant_landmark = $request->merchant_landmark;
+                if($request->merchant_password_new){
+                    $merchant->merchant_password = Hash::make($request->merchant_password_new);
+                    $merchant->merchant_plain_password = $request->merchant_password_new;
+                }
+                if($merchant->save()){
+                    Session::forget('userPic');
+                    Session::put('userPic',$merchant->merchant_profile);
+                    $logDescription = [
+                        'pastInfo' => $temp,
+                        'presentInfo' => $merchant,
+                        'message' => 'Profile updated successfully!'
+                    ];
+                    $this->saveLog('Profile Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                    return redirect()->back()->with('success','Profile updated successfully!');
+                }else{
+                    $logDescription = [
+                        'message' => 'Unable to updata profile data into database right now! Please try again after sometimes.'
+                    ];
+                    $this->saveLog('Profile Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                    return redirect()->back()->with('error','Something went wrong! Please check activity log for more details.');
+                }
+            }else{
+                $logDescription = [
+                    'message' => 'Merchant not found!'
+                ];
+                $this->saveLog('Profile Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                return redirect()->back()->with('error','Something went wrong! Please check activity log for more details.');
+            }
+        }catch(Exception $e){
+            $logDescription = [
+                'message' => $e->getMessage()
+            ];
+            $this->saveLog('Profile Update Exception', json_encode($logDescription),$request->ip(),$request->userAgent());
+            return redirect()->back()->with('error','Something went wrong! Please check activity log for more details.');
+        }
     }
     public function merchantLogsView()
     {

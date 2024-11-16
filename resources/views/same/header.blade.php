@@ -265,7 +265,7 @@
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link menu-link  {{ Request::is('merchant/logs') ? 'active' : '' }}" href="{{url('merchant/logs')}}">
-                                            <i class="bx bx-notepad"></i> <span data-key="t-widgets">Logs</span>
+                                            <i class="bx bx-notepad"></i> <span data-key="t-widgets">Activity Log</span>
                                         </a>
                                     </li>
                                     <li class="nav-item">

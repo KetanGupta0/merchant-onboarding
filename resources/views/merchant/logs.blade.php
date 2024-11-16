@@ -2,10 +2,10 @@
 <div class="row">
     <div class="col-12">
         <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-            <h4 class="mb-sm-0">Logs</h4>
+            <h4 class="mb-sm-0">Activity Log</h4>
             <div class="page-title-right">
                 <ol class="breadcrumb m-0">
-                    <li class="breadcrumb-item active">Logs</li>
+                    <li class="breadcrumb-item active">Activity Log</li>
                 </ol>
             </div>
         </div>
@@ -23,7 +23,6 @@
                                 <th>Id</th>
                                 <th>Event Name</th>
                                 <th>Event Message</th>
-                                <th>Event User Type</th>
                                 <th>Event Date</th>
                                 <th>Event User IP</th>
                             </tr>
@@ -34,7 +33,6 @@
                                     <td>{{$loop->index+1}}</td>
                                     <td>{{$log->log_event_type}}</td>
                                     <td>{{ json_decode($log->log_description)->message ?? 'No message available' }}</td>
-                                    <td>{{$log->log_user_type}}</td>
                                     <td>{{date('d M Y h:i:s A',strtotime($log->created_at))}}</td>
                                     <td>{{$log->log_ip_address}}</td>
                                 </tr>

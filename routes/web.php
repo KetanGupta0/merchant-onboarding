@@ -28,6 +28,8 @@ Route::get('/merchant/account/details',[MerchantController::class,'merchantAccou
 Route::get('/merchant/url/whitelisting',[MerchantController::class,'merchantUrlWhitelistingView']);
 Route::get('/merchant/settlement/report',[MerchantController::class,'merchantSettlementReportsView']);
 Route::get('/merchant/settings',[MerchantController::class,'merchantSettingsView']);
+Route::post('/merchant/settings/update',[MerchantController::class,'merchantSettingsUpdate']);
+
 Route::get('/merchant/logs',[MerchantController::class,'merchantLogsView']);
 
 
