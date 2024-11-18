@@ -63,6 +63,7 @@
                                 @if(isset($account))
                                     <option value="{{$account->acc_account_type}}" selected>{{$account->acc_account_type}}</option>
                                 @else
+                                    <option value="Business">Business</option>
                                     <option value="Current">Current</option>
                                     <option value="Savings">Savings</option>
                                     <option value="Other">Other</option>
