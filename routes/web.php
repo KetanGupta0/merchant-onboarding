@@ -48,6 +48,9 @@ Route::post('/admin/merchant/delete',[AdminController::class,'adminMerchantDelet
 Route::post('/admin/merchant/approval-{action}',[AdminController::class,'adminMerchantApprovalAJAX']);
 
 Route::get('/admin/account/details',[AdminController::class,'adminAccountDetailsView']);
+Route::get('/admin/account/details/view-{id}',[AdminController::class,'adminAccountDetailsEditView']);
+Route::get('/admin/account/details/status/{status}-{id}',[AdminController::class,'adminAccountDetailsChangeStatus']);
+Route::post('/admin/account/details/update',[AdminController::class,'adminAccountDetailsUpdate']);
 
 Route::get('/admin/url/whitelisting',[AdminController::class,'adminUrlWhitelistingView']);
 Route::get('/admin/settlement/report',[AdminController::class,'adminSettlementReportsView']);

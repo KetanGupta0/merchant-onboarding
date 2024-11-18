@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountDetail;
 use App\Models\Admin;
 use App\Models\BusinessDetail;
 use App\Models\KYCDocument;
@@ -9,6 +10,7 @@ use App\Models\Log;
 use App\Models\MerchantInfo;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
@@ -391,8 +393,213 @@ class AdminController extends Controller
 
     public function adminAccountDetailsView()
     {
-        return $this->dashboardPage('admin.account-details');
+        if(!$this->checkLoginStatus()){
+            return redirect()->to('logout')->with('error','Please login again.');
+        }
+        $accounts = DB::table('merchant_infos')
+        ->join('account_details', 'merchant_infos.merchant_id', '=', 'account_details.acc_merchant_id')
+        ->select(
+            'merchant_infos.merchant_name',
+            'merchant_infos.merchant_phone',
+            'merchant_infos.merchant_id',
+            'merchant_infos.merchant_email',
+            'account_details.acc_merchant_id',
+            'account_details.acc_business_id',
+            'account_details.acc_account_number',
+            'account_details.acc_bank_name',
+            'account_details.acc_branch_name',
+            'account_details.acc_ifsc_code',
+            'account_details.acc_micr_code',
+            'account_details.acc_swift_code',
+            'account_details.acc_account_type',
+            'account_details.acc_status',
+            'account_details.acc_id'
+        )->where('account_details.acc_status','!=','Deleted')
+        ->get();
+        return $this->dashboardPage('admin.account-details',compact('accounts'));
     }
+    public function adminAccountDetailsEditView(Request $request, $id){
+        $account = AccountDetail::find($id);
+        if($account){
+            return $this->dashboardPage('admin.account-details-view',compact('account'));
+        }else{
+            $logDescription = ["message" => "Account id - $id dose not exists or might be deleted!"];
+            $this->saveLog("Account not found", json_encode($logDescription),$request->ip(), $request->userAgent());
+            return redirect()->back()->with('error','Account not found!');
+        }
+    }
+    public function adminAccountDetailsChangeStatus(Request $request, $status, $id){
+        if(!$this->checkLoginStatus()){
+            if($status == "delete"){
+                return response()->json(['message' => 'Please login again.'],400);
+            }
+            return redirect()->to('logout')->with('error','Please login again.');
+        }
+        $account = AccountDetail::find($id);
+        if($account){
+            $oldstatus = $account->acc_status;
+            try{
+                switch($status){
+                    case 'active':
+                        $account->acc_status = 'Active';
+                        break;
+                    case 'inactive':
+                        $account->acc_status = 'Inactive';
+                        break;
+                    case 'suspend':
+                        $account->acc_status = 'Suspended';
+                        break;
+                    case 'close':
+                        $account->acc_status = 'Closed';
+                        break;
+                    case 'delete':
+                        $account->acc_status = 'Deleted';
+                        break;
+                    default:
+                    $logDescription = ["message" => "Requested URL does not exists!"];
+                    $this->saveLog("Account $status exception", json_encode($logDescription),$request->ip(), $request->userAgent());
+                    return redirect()->back()->with('error','URL not found!');
+                }
+                if($account->save()){
+                    // Delete case is primary problem
+                    if($status == "delete"){
+                        $logDescription = [
+                            "account" => $account,
+                            "oldStatus" => $oldstatus,
+                            "message" => "Account deleted successfully!"
+                        ];
+                        $this->saveLog("Account $status", json_encode($logDescription),$request->ip(), $request->userAgent());
+                        return response()->json(true);
+                    }else{
+                        $logDescription = [
+                            "account" => $account,
+                            "oldStatus" => $oldstatus,
+                            "message" => "Account status updated to $status successfully!"
+                        ];
+                        $this->saveLog("Account $status", json_encode($logDescription),$request->ip(), $request->userAgent());
+                        return redirect()->back()->with('success','Account status updated successfully!');
+                    }
+                }
+            }catch(Exception $e){
+                $logDescription = [
+                    "message" => $e->getMessage()
+                ];
+                $this->saveLog("Account $status exception", json_encode($logDescription),$request->ip(), $request->userAgent());
+                return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+            }
+        }else{
+            $logDescription = [
+                "message" => "Account not found for id: $id! Unable to perform $status right now."
+            ];
+            $this->saveLog("Account $status", json_encode($logDescription),$request->ip(), $request->userAgent());
+            return redirect()->back()->with('error','Account not found!');
+        }
+    }
+    public function adminAccountDetailsUpdate(Request $request){
+        if(!$this->checkLoginStatus()){
+            return redirect()->to('logout')->with('error','Please login again.');
+        }
+        $request->validate([
+            'acc_merchant_id' => 'required|exists:merchant_infos,merchant_id',
+            'acc_business_id' => 'nullable|exists:business_details,business_id',
+            'acc_id' => 'required|numeric|exists:account_details,acc_id',
+            'acc_bank_name' => 'required|string|max:255',
+            'acc_branch_name' => 'nullable|string|max:255', // Optional
+            'acc_account_number' => 'required|digits_between:8,20', // Must be 8-20 digits
+            'acc_ifsc_code' => [
+                'required',
+                'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/', // Matches standard IFSC code pattern
+                'max:11'
+            ],
+            'acc_micr_code' => 'nullable|digits:9', // Optional, must be 9 digits if provided
+            'acc_swift_code' => 'nullable|string|max:11', // Optional, max length 11 characters
+            'acc_account_type' => 'required|in:Business,Current,Savings,Other',
+            'acc_status' => 'required',
+        ], [
+            'acc_id.required' => 'Account ID is required.',
+            'acc_id.numeric' => 'Invalid Account ID.',
+            'acc_id.exists' => 'Invalid Account ID.',
+            'acc_merchant_id.required' => 'Merchant ID is required.',
+            'acc_merchant_id.exists' => 'Invalid Merchant ID.',
+            'acc_business_id.exists' => 'Invalid Business ID.',
+            'acc_bank_name.required' => 'The Bank Name is required.',
+            'acc_bank_name.string' => 'The Bank Name must be a valid string.',
+            'acc_bank_name.max' => 'The Bank Name must not exceed 255 characters.',
+            'acc_branch_name.string' => 'The Branch Name must be a valid string.',
+            'acc_branch_name.max' => 'The Branch Name must not exceed 255 characters.',
+            'acc_account_number.required' => 'The Account Number is required.',
+            'acc_account_number.digits_between' => 'The Account Number must be between 8 and 20 digits.',
+            'acc_ifsc_code.required' => 'The IFSC Code is required.',
+            'acc_ifsc_code.regex' => 'The IFSC Code must be a valid 11-character code.',
+            'acc_ifsc_code.max' => 'The IFSC Code must not exceed 11 characters.',
+            'acc_micr_code.digits' => 'The MICR Code must be exactly 9 digits.',
+            'acc_swift_code.string' => 'The Swift Code must be a valid string.',
+            'acc_swift_code.max' => 'The Swift Code must not exceed 11 characters.',
+            'acc_account_type.required' => 'The Account Type is required.',
+            'acc_account_type.in' => 'The Account Type must be one of Business, Current, Savings, or Other.',
+            'acc_status.required' => 'Please select account status before proceeding!',
+        ]);
+        try{
+            $merchant = MerchantInfo::find($request->acc_merchant_id);
+            if($merchant){
+                $business = BusinessDetail::where('business_merchant_id','=',$merchant->merchant_id)->where('business_status','=','Active')->first();
+                if($business){
+                    $account = AccountDetail::where('acc_merchant_id','=',$merchant->merchant_id)
+                        ->where('acc_business_id','=',$business->business_id)
+                        ->where('acc_status','!=','Deleted')
+                        ->first();
+                    $temp = null;
+                    if(!$account){
+                        return redirect()->back()->with('error',"Account not found for account number: $request->acc_account_number");
+                    }else{
+                        $temp = $account->replicate();
+                    }
+                    $account->acc_bank_name = $request->acc_bank_name;
+                    $account->acc_account_number = $request->acc_account_number;
+                    $account->acc_ifsc_code = $request->acc_ifsc_code;
+                    $account->acc_account_type = $request->acc_account_type;
+                    $account->acc_branch_name = $request->acc_branch_name;
+                    $account->acc_micr_code = $request->acc_micr_code;
+                    $account->acc_swift_code = $request->acc_swift_code;
+                    $account->acc_status = $request->acc_status;
+                    if($account->save()){
+                        $logDescription = [
+                            'pastInfo' => $temp,
+                            'presentInfo' => $account,
+                            'message' => $temp ? "Account updated successfully!" : "Account created successfully!"
+                        ];
+                        $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                        return redirect()->back()->with('success',$temp ? "Account updated successfully!" : "Account created successfully!");
+                    }else{
+                        $logDescription = [
+                            'message' => "Unable to save/update data into database!"
+                        ];
+                        $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                        return redirect()->back()->with('error','An unecpected error occured! Please try after sometimes.');
+                    }
+                }else{
+                    $logDescription = [
+                        'message' => 'Business info not found!'
+                    ];
+                    $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                    return redirect()->back()->with('error','An unecpected error occured! Please try after sometimes.');
+                }
+            }else{
+                $logDescription = [
+                    'message' => 'Merchant info not found!'
+                ];
+                $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
+                return redirect()->back()->with('error','An unecpected error occured! Please try after sometimes.');
+            }
+        }catch(Exception $e){
+            $logDescription = [
+                'message' => $e->getMessage()
+            ];
+            $this->saveLog('Account Details Update Exception', json_encode($logDescription),$request->ip(),$request->userAgent());
+            return redirect()->back()->with('error','Something went wrong! Please check activity log for more details.');
+        }
+    }
+
     public function adminUrlWhitelistingView()
     {
         return $this->dashboardPage('admin.url-whitelist');
