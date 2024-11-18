@@ -8,6 +8,7 @@ use App\Models\BusinessDetail;
 use App\Models\KYCDocument;
 use App\Models\Log;
 use App\Models\MerchantInfo;
+use App\Models\UrlWhiteListing;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
-    private function saveLog($event, $description, $ip = null, $userAgent = null){
+    private function saveLog($event, $description, $ip = null, $userAgent = null)
+    {
         Log::create([
             'log_user_id' => Session::get('userId'),
             'log_user_type' => Session::get('userType'),
@@ -68,14 +70,15 @@ class AdminController extends Controller
                 $merchant = MerchantInfo::where('merchant_status', '!=', 'Deleted')->find($request->merchant_id);
                 if ($merchant) {
                     $merchant->merchant_status = 'Deleted';
-                    if($merchant->save()){
+                    if ($merchant->save()) {
                         $logDescription = [
                             'deleted merchant' => $merchant,
-                            'message' => 'Merchant '.$merchant->merchant_name.' Deleted successfully'
+                            'message' => 'Merchant ' . $merchant->merchant_name . ' Deleted successfully'
                         ];
-                        $this->saveLog(event: 'Merchant Deleted',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
+                        $this->saveLog(event: 'Merchant Deleted', description: json_encode($logDescription), ip: $request->ip(), userAgent: $request->userAgent());
                         return response()->json(true);
-                    }else{
+                    }
+                    else {
                         return response()->json(false);
                     }
                 }
@@ -86,7 +89,7 @@ class AdminController extends Controller
                 $logDescription = [
                     'message' => $e->getMessage()
                 ];
-                $this->saveLog('Exception',json_encode($logDescription), $request->ip(),$request->userAgent());
+                $this->saveLog('Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
                 return response()->json(['message' => 'Something went wrong! Please check the log for more details.'], 400);
             }
         }
@@ -94,19 +97,22 @@ class AdminController extends Controller
             return response()->json(['message' => 'Unable to process your request right now! Please reload the page and try again.'], 400);
         }
     }
-    public function adminMerchantFetchAJAX(){
-        if (!$this->checkLoginStatus()){
+    public function adminMerchantFetchAJAX()
+    {
+        if (!$this->checkLoginStatus()) {
             return response()->json(['message' => 'Unable to process your request right now! Please reload the page and try again.'], 400);
         }
-        $data = MerchantInfo::select('merchant_id', 'merchant_name', 'merchant_phone', 'merchant_email', 'created_at', 'merchant_is_verified', 'merchant_is_onboarded')->where('merchant_status','!=','Deleted')->get();
-        if($data){
-            return response()->json(['status'=>true,'data'=>$data]);
-        }else{
-            return response()->json(['status'=>false]);
+        $data = MerchantInfo::select('merchant_id', 'merchant_name', 'merchant_phone', 'merchant_email', 'created_at', 'merchant_is_verified', 'merchant_is_onboarded')->where('merchant_status', '!=', 'Deleted')->get();
+        if ($data) {
+            return response()->json(['status' => true, 'data' => $data]);
+        }
+        else {
+            return response()->json(['status' => false]);
         }
     }
-    public function adminMerchantApprovalAJAX(Request $request, $action){
-        if(!$this->checkLoginStatus()){
+    public function adminMerchantApprovalAJAX(Request $request, $action)
+    {
+        if (!$this->checkLoginStatus()) {
             return response()->json(['message' => 'Unable to process your request right now! Please reload the page and try again.'], 400);
         }
         $request->validate([
@@ -115,30 +121,32 @@ class AdminController extends Controller
             'merchant_id.required' => 'Unable to process your request right now! Please reload the page and try again.',
             'merchant_id.numeric' => 'Unable to process your request right now! Please reload the page and try again.',
         ]);
-        try{
+        try {
             $merchant = MerchantInfo::where('merchant_status', '!=', 'Deleted')->find($request->merchant_id);
             if ($merchant) {
-                switch($action){
+                switch ($action) {
                     case 'approve':
                         $merchant->merchant_is_verified = 'Approved';
                         $logDescription = [
                             'merchant approved' => $merchant,
-                            'message' => 'Merchant '.$merchant->merchant_name.' Approved successfully'
+                            'message' => 'Merchant ' . $merchant->merchant_name . ' Approved successfully'
                         ];
                         break;
                     case 'revoke':
                         $merchant->merchant_is_verified = 'Not Approved';
                         $logDescription = [
                             'merchant revoked' => $merchant,
-                            'message' => 'Merchant '.$merchant->merchant_name.' Revoked successfully'
+                            'message' => 'Merchant ' . $merchant->merchant_name . ' Revoked successfully'
                         ];
                         break;
-                    default: return response()->json(['message'=>'URL not found!'],404);
+                    default:
+                        return response()->json(['message' => 'URL not found!'], 404);
                 }
-                if($merchant->save()){
-                    $this->saveLog(event: 'Merchant Approval',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
+                if ($merchant->save()) {
+                    $this->saveLog(event: 'Merchant Approval', description: json_encode($logDescription), ip: $request->ip(), userAgent: $request->userAgent());
                     return response()->json(data: true);
-                }else{
+                }
+                else {
                     return response()->json(false);
                 }
             }
@@ -149,36 +157,39 @@ class AdminController extends Controller
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Merchant Approval Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
+            $this->saveLog('Merchant Approval Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
             return response()->json(['message' => 'Something went wrong! Please check the log for more details.'], 400);
         }
     }
-    public function adminMerchantView(Request $request,$id){
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Please login again.');
+    public function adminMerchantView(Request $request, $id)
+    {
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
-        try{
+        try {
             $merchant = MerchantInfo::where('merchant_status', '!=', 'Deleted')->find($id);
-            if($merchant){
-                $business = BusinessDetail::where('business_merchant_id','=',$merchant->merchant_id)->where('business_status','!=','Deleted')->first();
-                if($business){
-                    $documents = KYCDocument::where('kyc_merchant_id','=',$merchant->merchant_id)->where('kyc_business_id','=',$business->business_id)->where('kyc_status','!=','Deleted')->get();
-                    return $this->dashboardPage('admin.merchant-view',compact('merchant','business','documents'));
+            if ($merchant) {
+                $business = BusinessDetail::where('business_merchant_id', '=', $merchant->merchant_id)->where('business_status', '!=', 'Deleted')->first();
+                if ($business) {
+                    $documents = KYCDocument::where('kyc_merchant_id', '=', $merchant->merchant_id)->where('kyc_business_id', '=', $business->business_id)->where('kyc_status', '!=', 'Deleted')->get();
+                    return $this->dashboardPage('admin.merchant-view', compact('merchant', 'business', 'documents'));
                 }
-            }else{
-                return redirect()->back()->with('error','Merchant not found!');
             }
-        }catch (Exception $e) {
+            else {
+                return redirect()->back()->with('error', 'Merchant not found!');
+            }
+        } catch (Exception $e) {
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Merchant View Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
-            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+            $this->saveLog('Merchant View Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Something went wrong! Please check the log for more details.');
         }
     }
-    public function adminMerchantInfoUpdate(Request $request){
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Please login again.');
+    public function adminMerchantInfoUpdate(Request $request)
+    {
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
         $validator = Validator::make($request->all(), [
             'merchant_name' => 'required|string|max:255',
@@ -215,13 +226,13 @@ class AdminController extends Controller
             'merchant_zip.numeric' => 'The zip code should contain only numbers.',
             'merchant_zip.digits' => 'The zip code must be exactly 6 digits.',
         ]);
-    
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-        try{
-            $merchant = MerchantInfo::where('merchant_status','!=','Deleted')->find($request->merchant_id);
-            if($merchant){
+        try {
+            $merchant = MerchantInfo::where('merchant_status', '!=', 'Deleted')->find($request->merchant_id);
+            if ($merchant) {
                 $temp = $merchant->replicate();
                 $merchant->merchant_name = $request->merchant_name;
                 $merchant->merchant_phone = $request->merchant_phone;
@@ -237,31 +248,34 @@ class AdminController extends Controller
                 $merchant->merchant_country = $request->merchant_country;
                 $merchant->merchant_zip = $request->merchant_zip;
                 $merchant->merchant_landmark = $request->merchant_landmark;
-                if($merchant->save()){
+                if ($merchant->save()) {
                     $logDescription = [
                         'pastInfo' => $temp,
                         'presentInfo' => $merchant,
                         'message' => 'Merchant info updated successfully!'
                     ];
-                    $this->saveLog(event: 'Merchant Info Update',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
-                    return redirect()->back()->with('success','Merchant info updated successfully!');
-                }else{
-                    return redirect()->back()->with('error','Unable to update merchant info right now!');
+                    $this->saveLog(event: 'Merchant Info Update', description: json_encode($logDescription), ip: $request->ip(), userAgent: $request->userAgent());
+                    return redirect()->back()->with('success', 'Merchant info updated successfully!');
                 }
-            }else{
-                return redirect()->back()->with('error','Merchant not found!');
+                else {
+                    return redirect()->back()->with('error', 'Unable to update merchant info right now!');
+                }
             }
-        }catch (Exception $e) {
+            else {
+                return redirect()->back()->with('error', 'Merchant not found!');
+            }
+        } catch (Exception $e) {
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Merchant Info Update Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
-            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+            $this->saveLog('Merchant Info Update Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Something went wrong! Please check the log for more details.');
         }
     }
-    public function adminMerchantBusinessInfoUpdate(Request $request){
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Please login again.');
+    public function adminMerchantBusinessInfoUpdate(Request $request)
+    {
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
         $validator = Validator::make($request->all(), [
             'business_name' => 'required|string|max:255',
@@ -289,13 +303,13 @@ class AdminController extends Controller
             'business_merchant_id.required' => 'Someting went wrong!',
             'business_merchant_id.numeric' => 'Someting went wrong!',
         ]);
-    
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-        try{
-            $business = BusinessDetail::where('business_status','!=','Deleted')->find($request->business_id);
-            if($business){
+        try {
+            $business = BusinessDetail::where('business_status', '!=', 'Deleted')->find($request->business_id);
+            if ($business) {
                 $temp = $business->replicate();
                 $business->business_name = $request->business_name;
                 $business->business_type = $request->business_type;
@@ -303,31 +317,34 @@ class AdminController extends Controller
                 $business->business_website = $request->business_website;
                 $business->business_is_verified = $request->business_is_verified;
                 $business->business_status = $request->business_status;
-                if($business->save()){
+                if ($business->save()) {
                     $logDescription = [
                         'pastInfo' => $temp,
                         'presentInfo' => $business,
                         'message' => 'Business info updated successfully!'
                     ];
-                    $this->saveLog(event: 'Merchant Business Info Update',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
-                    return redirect()->back()->with('success','Business info updated successfully!');
-                }else{
-                    return redirect()->back()->with('error','Unable to update business info right now!');
+                    $this->saveLog(event: 'Merchant Business Info Update', description: json_encode($logDescription), ip: $request->ip(), userAgent: $request->userAgent());
+                    return redirect()->back()->with('success', 'Business info updated successfully!');
                 }
-            }else{
-                return redirect()->back()->with('error','Business not found!');
+                else {
+                    return redirect()->back()->with('error', 'Unable to update business info right now!');
+                }
             }
-        }catch (Exception $e) {
+            else {
+                return redirect()->back()->with('error', 'Business not found!');
+            }
+        } catch (Exception $e) {
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Merchant Business Info Update Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
-            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+            $this->saveLog('Merchant Business Info Update Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Something went wrong! Please check the log for more details.');
         }
     }
-    public function adminMerchantKycDocUpdate(Request $request){
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Please login again.');
+    public function adminMerchantKycDocUpdate(Request $request)
+    {
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
         $validator = Validator::make($request->all(), [
             'kyc_document_name' => 'required|file|mimes:jpeg,jpg,png|max:2048',
@@ -349,16 +366,16 @@ class AdminController extends Controller
             'kyc_business_id.required' => 'Someting went wrong!',
             'kyc_business_id.numeric' => 'Someting went wrong!',
         ]);
-        
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-        try{
-            $kycDocument = KYCDocument::where('kyc_merchant_id','=',$request->kyc_merchant_id)
-                                    ->where('kyc_business_id','=',$request->kyc_business_id)
-                                    ->where('kyc_status','!=','Deleted')
-                                    ->find($request->kyc_id);
-            if($kycDocument){
+        try {
+            $kycDocument = KYCDocument::where('kyc_merchant_id', '=', $request->kyc_merchant_id)
+                ->where('kyc_business_id', '=', $request->kyc_business_id)
+                ->where('kyc_status', '!=', 'Deleted')
+                ->find($request->kyc_id);
+            if ($kycDocument) {
                 $temp = $kycDocument->replicate();
                 if ($request->hasFile('kyc_document_name')) {
                     $file = $request->file('kyc_document_name');
@@ -367,79 +384,84 @@ class AdminController extends Controller
                     $kycDocument->kyc_document_name = $filename;
                     $kycDocument->kyc_document_path = 'uploads/kyc/docs';
                     $kycDocument->kyc_document_type = $request->kyc_document_type;
-                    if($kycDocument->save()){
+                    if ($kycDocument->save()) {
                         $logDescription = [
                             'pastInfo' => $temp,
                             'presentInfo' => $kycDocument,
                             'message' => 'KYC Document updated successfully!'
                         ];
-                        $this->saveLog(event: 'Merchant KYC Docuemnt Update',description: json_encode($logDescription), ip:$request->ip(), userAgent:$request->userAgent());
-                        return redirect()->back()->with('success','KYC Document updated successfully!');
-                    }else{
-                        return redirect()->back()->with('error','Unable to update KYC Document right now!');
+                        $this->saveLog(event: 'Merchant KYC Docuemnt Update', description: json_encode($logDescription), ip: $request->ip(), userAgent: $request->userAgent());
+                        return redirect()->back()->with('success', 'KYC Document updated successfully!');
+                    }
+                    else {
+                        return redirect()->back()->with('error', 'Unable to update KYC Document right now!');
                     }
                 }
-            }else{
-                return redirect()->back()->with('error','KYC Document not found!');
             }
-        }catch (Exception $e) {
+            else {
+                return redirect()->back()->with('error', 'KYC Document not found!');
+            }
+        } catch (Exception $e) {
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Merchant KYC Docuemnt Update Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
-            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+            $this->saveLog('Merchant KYC Docuemnt Update Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Something went wrong! Please check the log for more details.');
         }
     }
 
     public function adminAccountDetailsView()
     {
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Please login again.');
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
         $accounts = DB::table('merchant_infos')
-        ->join('account_details', 'merchant_infos.merchant_id', '=', 'account_details.acc_merchant_id')
-        ->select(
-            'merchant_infos.merchant_name',
-            'merchant_infos.merchant_phone',
-            'merchant_infos.merchant_id',
-            'merchant_infos.merchant_email',
-            'account_details.acc_merchant_id',
-            'account_details.acc_business_id',
-            'account_details.acc_account_number',
-            'account_details.acc_bank_name',
-            'account_details.acc_branch_name',
-            'account_details.acc_ifsc_code',
-            'account_details.acc_micr_code',
-            'account_details.acc_swift_code',
-            'account_details.acc_account_type',
-            'account_details.acc_status',
-            'account_details.acc_id'
-        )->where('account_details.acc_status','!=','Deleted')
-        ->get();
-        return $this->dashboardPage('admin.account-details',compact('accounts'));
+            ->join('account_details', 'merchant_infos.merchant_id', '=', 'account_details.acc_merchant_id')
+            ->select(
+                'merchant_infos.merchant_name',
+                'merchant_infos.merchant_phone',
+                'merchant_infos.merchant_id',
+                'merchant_infos.merchant_email',
+                'account_details.acc_merchant_id',
+                'account_details.acc_business_id',
+                'account_details.acc_account_number',
+                'account_details.acc_bank_name',
+                'account_details.acc_branch_name',
+                'account_details.acc_ifsc_code',
+                'account_details.acc_micr_code',
+                'account_details.acc_swift_code',
+                'account_details.acc_account_type',
+                'account_details.acc_status',
+                'account_details.acc_id'
+            )->where('account_details.acc_status', '!=', 'Deleted')
+            ->get();
+        return $this->dashboardPage('admin.account-details', compact('accounts'));
     }
-    public function adminAccountDetailsEditView(Request $request, $id){
+    public function adminAccountDetailsEditView(Request $request, $id)
+    {
         $account = AccountDetail::find($id);
-        if($account){
-            return $this->dashboardPage('admin.account-details-view',compact('account'));
-        }else{
+        if ($account) {
+            return $this->dashboardPage('admin.account-details-view', compact('account'));
+        }
+        else {
             $logDescription = ["message" => "Account id - $id dose not exists or might be deleted!"];
-            $this->saveLog("Account not found", json_encode($logDescription),$request->ip(), $request->userAgent());
-            return redirect()->back()->with('error','Account not found!');
+            $this->saveLog("Account not found", json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Account not found!');
         }
     }
-    public function adminAccountDetailsChangeStatus(Request $request, $status, $id){
-        if(!$this->checkLoginStatus()){
-            if($status == "delete"){
-                return response()->json(['message' => 'Please login again.'],400);
+    public function adminAccountDetailsChangeStatus(Request $request, $status, $id)
+    {
+        if (!$this->checkLoginStatus()) {
+            if ($status == "delete") {
+                return response()->json(['message' => 'Please login again.'], 400);
             }
-            return redirect()->to('logout')->with('error','Please login again.');
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
         $account = AccountDetail::find($id);
-        if($account){
+        if ($account) {
             $oldstatus = $account->acc_status;
-            try{
-                switch($status){
+            try {
+                switch ($status) {
                     case 'active':
                         $account->acc_status = 'Active';
                         break;
@@ -456,48 +478,51 @@ class AdminController extends Controller
                         $account->acc_status = 'Deleted';
                         break;
                     default:
-                    $logDescription = ["message" => "Requested URL does not exists!"];
-                    $this->saveLog("Account $status exception", json_encode($logDescription),$request->ip(), $request->userAgent());
-                    return redirect()->back()->with('error','URL not found!');
+                        $logDescription = ["message" => "Requested URL does not exists!"];
+                        $this->saveLog("Account $status exception", json_encode($logDescription), $request->ip(), $request->userAgent());
+                        return redirect()->back()->with('error', 'URL not found!');
                 }
-                if($account->save()){
+                if ($account->save()) {
                     // Delete case is primary problem
-                    if($status == "delete"){
+                    if ($status == "delete") {
                         $logDescription = [
                             "account" => $account,
                             "oldStatus" => $oldstatus,
                             "message" => "Account deleted successfully!"
                         ];
-                        $this->saveLog("Account $status", json_encode($logDescription),$request->ip(), $request->userAgent());
+                        $this->saveLog("Account $status", json_encode($logDescription), $request->ip(), $request->userAgent());
                         return response()->json(true);
-                    }else{
+                    }
+                    else {
                         $logDescription = [
                             "account" => $account,
                             "oldStatus" => $oldstatus,
                             "message" => "Account status updated to $status successfully!"
                         ];
-                        $this->saveLog("Account $status", json_encode($logDescription),$request->ip(), $request->userAgent());
-                        return redirect()->back()->with('success','Account status updated successfully!');
+                        $this->saveLog("Account $status", json_encode($logDescription), $request->ip(), $request->userAgent());
+                        return redirect()->back()->with('success', 'Account status updated successfully!');
                     }
                 }
-            }catch(Exception $e){
+            } catch (Exception $e) {
                 $logDescription = [
                     "message" => $e->getMessage()
                 ];
-                $this->saveLog("Account $status exception", json_encode($logDescription),$request->ip(), $request->userAgent());
-                return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+                $this->saveLog("Account $status exception", json_encode($logDescription), $request->ip(), $request->userAgent());
+                return redirect()->back()->with('error', 'Something went wrong! Please check the log for more details.');
             }
-        }else{
+        }
+        else {
             $logDescription = [
                 "message" => "Account not found for id: $id! Unable to perform $status right now."
             ];
-            $this->saveLog("Account $status", json_encode($logDescription),$request->ip(), $request->userAgent());
-            return redirect()->back()->with('error','Account not found!');
+            $this->saveLog("Account $status", json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Account not found!');
         }
     }
-    public function adminAccountDetailsUpdate(Request $request){
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Please login again.');
+    public function adminAccountDetailsUpdate(Request $request)
+    {
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Please login again.');
         }
         $request->validate([
             'acc_merchant_id' => 'required|exists:merchant_infos,merchant_id',
@@ -539,19 +564,20 @@ class AdminController extends Controller
             'acc_account_type.in' => 'The Account Type must be one of Business, Current, Savings, or Other.',
             'acc_status.required' => 'Please select account status before proceeding!',
         ]);
-        try{
+        try {
             $merchant = MerchantInfo::find($request->acc_merchant_id);
-            if($merchant){
-                $business = BusinessDetail::where('business_merchant_id','=',$merchant->merchant_id)->where('business_status','=','Active')->first();
-                if($business){
-                    $account = AccountDetail::where('acc_merchant_id','=',$merchant->merchant_id)
-                        ->where('acc_business_id','=',$business->business_id)
-                        ->where('acc_status','!=','Deleted')
+            if ($merchant) {
+                $business = BusinessDetail::where('business_merchant_id', '=', $merchant->merchant_id)->where('business_status', '=', 'Active')->first();
+                if ($business) {
+                    $account = AccountDetail::where('acc_merchant_id', '=', $merchant->merchant_id)
+                        ->where('acc_business_id', '=', $business->business_id)
+                        ->where('acc_status', '!=', 'Deleted')
                         ->first();
                     $temp = null;
-                    if(!$account){
-                        return redirect()->back()->with('error',"Account not found for account number: $request->acc_account_number");
-                    }else{
+                    if (!$account) {
+                        return redirect()->back()->with('error', "Account not found for account number: $request->acc_account_number");
+                    }
+                    else {
                         $temp = $account->replicate();
                     }
                     $account->acc_bank_name = $request->acc_bank_name;
@@ -562,48 +588,137 @@ class AdminController extends Controller
                     $account->acc_micr_code = $request->acc_micr_code;
                     $account->acc_swift_code = $request->acc_swift_code;
                     $account->acc_status = $request->acc_status;
-                    if($account->save()){
+                    if ($account->save()) {
                         $logDescription = [
                             'pastInfo' => $temp,
                             'presentInfo' => $account,
                             'message' => $temp ? "Account updated successfully!" : "Account created successfully!"
                         ];
-                        $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
-                        return redirect()->back()->with('success',$temp ? "Account updated successfully!" : "Account created successfully!");
-                    }else{
+                        $this->saveLog('Account Details Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                        return redirect()->back()->with('success', $temp ? "Account updated successfully!" : "Account created successfully!");
+                    }
+                    else {
                         $logDescription = [
                             'message' => "Unable to save/update data into database!"
                         ];
-                        $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
-                        return redirect()->back()->with('error','An unecpected error occured! Please try after sometimes.');
+                        $this->saveLog('Account Details Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                        return redirect()->back()->with('error', 'An unecpected error occured! Please try after sometimes.');
                     }
-                }else{
+                }
+                else {
                     $logDescription = [
                         'message' => 'Business info not found!'
                     ];
-                    $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
-                    return redirect()->back()->with('error','An unecpected error occured! Please try after sometimes.');
+                    $this->saveLog('Account Details Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                    return redirect()->back()->with('error', 'An unecpected error occured! Please try after sometimes.');
                 }
-            }else{
+            }
+            else {
                 $logDescription = [
                     'message' => 'Merchant info not found!'
                 ];
-                $this->saveLog('Account Details Update', json_encode($logDescription),$request->ip(),$request->userAgent());
-                return redirect()->back()->with('error','An unecpected error occured! Please try after sometimes.');
+                $this->saveLog('Account Details Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                return redirect()->back()->with('error', 'An unecpected error occured! Please try after sometimes.');
             }
-        }catch(Exception $e){
+        } catch (Exception $e) {
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Account Details Update Exception', json_encode($logDescription),$request->ip(),$request->userAgent());
-            return redirect()->back()->with('error','Something went wrong! Please check activity log for more details.');
+            $this->saveLog('Account Details Update Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Something went wrong! Please check activity log for more details.');
         }
     }
 
     public function adminUrlWhitelistingView()
     {
-        return $this->dashboardPage('admin.url-whitelist');
+        $urls = DB::table('url_white_listings')
+            ->join('merchant_infos', 'url_white_listings.uwl_merchant_id', '=', 'merchant_infos.merchant_id')
+            ->select(
+                'url_white_listings.*',
+                'merchant_infos.merchant_name',
+                'merchant_infos.merchant_email',
+                'merchant_infos.merchant_phone',
+                'merchant_infos.merchant_id'
+            )
+            ->where('url_white_listings.uwl_status', '!=', 'Deleted')
+            ->orderBy('url_white_listings.uwl_merchant_id', 'ASC')
+            ->orderBy('url_white_listings.created_at', 'DESC')
+            ->get();
+        return $this->dashboardPage('admin.url-whitelist', compact('urls'));
     }
+    public function adminUrlWhitelistingRequestActive(Request $request, $id){
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('/login')->with('error', 'Login is required!');
+        }
+        try{
+            $url = UrlWhiteListing::where('uwl_status','!=','delete')->find($id);
+            if($url){
+                $url->uwl_status = 'Active';
+                if($url->save()){
+                    return redirect()->back()->with('success','URL status updated successfully!');
+                }else{
+                    return redirect()->back()->with('error','Unable to complete your request right now! Please try again later.');
+                }
+            }else{
+                return redirect()->back()->with('error','URL not found!');
+            }
+        }catch(Exception $e){
+            $logDescription = [
+                'message' => $e->getMessage()
+            ];
+            $this->saveLog('URL Whitelist Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
+            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+        }
+    }
+    public function adminUrlWhitelistingRequestInactive(Request $request, $id){
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('/login')->with('error', 'Login is required!');
+        }
+        try{
+            $url = UrlWhiteListing::where('uwl_status','!=','delete')->find($id);
+            if($url){
+                $url->uwl_status = 'Inactive';
+                if($url->save()){
+                    return redirect()->back()->with('success','URL status updated successfully!');
+                }else{
+                    return redirect()->back()->with('error','Unable to complete your request right now! Please try again later.');
+                }
+            }else{
+                return redirect()->back()->with('error','URL not found!');
+            }
+        }catch(Exception $e){
+            $logDescription = [
+                'message' => $e->getMessage()
+            ];
+            $this->saveLog('URL Whitelist Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
+            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+        }
+    }
+    public function adminUrlWhitelistingRequestDelete(Request $request, $id){
+        if (!$this->checkLoginStatus()) {
+            return response()->json(['message' => 'Login is required!'],400);
+        }
+        try{
+            $url = UrlWhiteListing::where('uwl_status','!=','delete')->find($id);
+            if($url){
+                $url->uwl_status = 'Deleted';
+                if($url->save()){
+                    return response()->json(['message'=>'URL deleted sucessfully!','status'=>true],200);
+                }else{
+                    return response()->json(['message'=>'Unable to complete your request right now! Please try again later.'],400);
+                }
+            }else{
+                return response()->json(['message'=>'URL not found!','status'=>false],400);
+            }
+        }catch(Exception $e){
+            $logDescription = [
+                'message' => $e->getMessage()
+            ];
+            $this->saveLog('URL Whitelist Exception',json_encode($logDescription),$request->ip(),$request->userAgent());
+            return response()->json(['message' => 'Something went wrong! Please check the log for more details.'],400);
+        }
+    }
+
     public function adminSettlementReportsView()
     {
         return $this->dashboardPage('admin.settlement-report');
@@ -611,12 +726,12 @@ class AdminController extends Controller
     public function adminSettingsView()
     {
         $admin = Admin::find(Session::get('userId'));
-        return $this->dashboardPage('admin.settings',compact('admin'));
+        return $this->dashboardPage('admin.settings', compact('admin'));
     }
     public function adminSettingsUpdateAdmin(Request $request)
     {
-        if(!$this->checkLoginStatus()){
-            return redirect()->to('logout')->with('error','Login is required!');
+        if (!$this->checkLoginStatus()) {
+            return redirect()->to('logout')->with('error', 'Login is required!');
         }
         $request->validate([
             'admin_name' => 'required',
@@ -648,10 +763,10 @@ class AdminController extends Controller
             'admin_password_new_confirmed.same' => 'Password confirmation must match the new password.'
         ]);
 
-        try{
+        try {
             $admin = Admin::find(Session::get('userId'));
-            if($admin){
-                if(Hash::check($request->admin_password, $admin->admin_password)){
+            if ($admin) {
+                if (Hash::check($request->admin_password, $admin->admin_password)) {
                     $temp = $admin->replicate();
                     $admin->admin_name = $request->admin_name;
                     $admin->admin_email = $request->admin_email;
@@ -669,53 +784,55 @@ class AdminController extends Controller
                         $file->move($destinationPath, $filename);
                         $admin->admin_profile_pic = $filename;
                     }
-                    if($request->admin_password_new){
+                    if ($request->admin_password_new) {
                         $hashedPassword = Hash::make($request->admin_password_new);
                         $admin->admin_password = $hashedPassword;
                         $admin->admin_plain_password = $request->admin_password_new;
                     }
-                    if($admin->save()){
+                    if ($admin->save()) {
                         Session::forget('userName');
-                        Session::put('userName',$admin->admin_name);
-                        if ($request->hasFile('admin_profile_pic')){
+                        Session::put('userName', $admin->admin_name);
+                        if ($request->hasFile('admin_profile_pic')) {
                             Session::forget('userPic');
-                            Session::put('userPic',$filename);
+                            Session::put('userPic', $filename);
                         }
                         $logDescription = [
                             'pastInfo' => $temp,
                             'presentInfo' => $admin,
                             'message' => 'Profile updated successfully!'
                         ];
-                        $this->saveLog('Admin Profile Update',json_encode($logDescription), $request->ip(),$request->userAgent());
-                        return redirect()->back()->with('success','Profile updated successfully!');
+                        $this->saveLog('Admin Profile Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                        return redirect()->back()->with('success', 'Profile updated successfully!');
                     }
-                }else{
+                }
+                else {
                     $logDescription = [
                         'message' => 'Password is wrong!'
                     ];
-                    $this->saveLog('Admin Profile Update',json_encode($logDescription), $request->ip(), $request->userAgent());
-                    return redirect()->back()->with('error','Password is wrong!');
+                    $this->saveLog('Admin Profile Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                    return redirect()->back()->with('error', 'Password is wrong!');
                 }
-            }else{
+            }
+            else {
                 $logDescription = [
                     'message' => 'Admin not found!'
                 ];
-                $this->saveLog('Admin Profile Update',json_encode($logDescription), $request->ip(),$request->userAgent());
-                return redirect()->back()->with('error','Admin not found!');
+                $this->saveLog('Admin Profile Update', json_encode($logDescription), $request->ip(), $request->userAgent());
+                return redirect()->back()->with('error', 'Admin not found!');
             }
-        }catch(Exception $e){
+        } catch (Exception $e) {
             $logDescription = [
                 'message' => $e->getMessage()
             ];
-            $this->saveLog('Admin Profile Update Exception',json_encode($logDescription), $request->ip(),$request->userAgent());
-            return redirect()->back()->with('error','Something went wrong! Please check the log for more details.');
+            $this->saveLog('Admin Profile Update Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+            return redirect()->back()->with('error', 'Something went wrong! Please check the log for more details.');
         }
     }
 
     public function adminLogsView()
     {
-        $logs = Log::orderBy('log_id','desc')->get();
-        return $this->dashboardPage('admin.logs',compact('logs'));
+        $logs = Log::orderBy('log_id', 'desc')->get();
+        return $this->dashboardPage('admin.logs', compact('logs'));
     }
     // public function makeFirstAdmin(){
     //     $name = 'Admin';

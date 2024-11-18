@@ -7,6 +7,7 @@ use App\Models\BusinessDetail;
 use App\Models\KYCDocument;
 use App\Models\Log;
 use App\Models\MerchantInfo;
+use App\Models\UrlWhiteListing;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -159,8 +160,96 @@ class MerchantController extends Controller
 
     public function merchantUrlWhitelistingView()
     {
-        return $this->dashboardPage('merchant.url-white-listing');
+        $urls = UrlWhiteListing::where('uwl_merchant_id','=',Session::get('userId'))->where('uwl_status','!=','Deleted')->get();
+        return $this->dashboardPage('merchant.url-white-listing',compact('urls'));
     }
+    public function merchantUrlWhitelistingRequest(Request $request,$type){
+        if (!$this->checkLoginStatus()) {
+            if ($request->ajax() || $request->isXmlHttpRequest()) {
+                return response()->json(['message' => 'Login is required!'], 400);
+            }
+            return redirect()->to('/login')->with('error', 'Login is required!');
+        }
+        switch($type){
+            case 'new':
+                $request->validate(
+                    [
+                        'uwl_url' => 'required|url',
+                        'uwl_ip_address' => 'nullable|ip',
+                        'uwl_environment' => 'required|in:Production,UAT',
+                    ],
+                    [
+                        'uwl_url.required' => 'The Requested URL is required.',
+                        'uwl_url.url' => 'The Requested URL must be a valid URL in the format: https://example.com or https://www.example.com.',
+                        'uwl_ip_address.ip' => 'The IP Address must be a valid IP address.',
+                        'uwl_environment.required' => 'Please select an environment.',
+                        'uwl_environment.in' => 'The Environment must be either "Production" or "UAT".',
+                    ]
+                );
+                try{
+                    $url = UrlWhiteListing::where('uwl_merchant_id','=',Session::get('userId'))->where('uwl_url','=',$request->uwl_url)->first();
+                    if($url){
+                        return redirect()->back()->with('error','Requested URL already exists!');
+                    }else{
+                        $url = new UrlWhiteListing();
+                        $url->uwl_merchant_id = Session::get('userId');
+                        $url->uwl_url = $request->uwl_url;
+                        $url->uwl_ip_address = $request->uwl_ip_address;
+                        $url->uwl_environment = $request->uwl_environment;
+                        $url->uwl_status = 'Inactive';
+                        if($url->save()){
+                            return redirect()->back()->with('success','URL White Listing request added successfully!');
+                        }else{
+                            return redirect()->back()->with('error','Unable to complete your request right now! Please try again later.');
+                        }
+                    }
+                }catch(Exception $e){
+                    $logDescription = [
+                        'message' => $e->getMessage()
+                    ];
+                    $this->saveLog('URL White Listing Exception', json_encode($logDescription),$request->ip(),$request->userAgent());
+                    return redirect()->back()->with('error','Something went wrong! Please check activity log for more details.');
+                }
+                break;
+            case 'delete':
+                if (!$request->ajax()) {
+                    return response()->json(['message' => 'Invalid request. Only AJAX requests are allowed for delete.'], 403);
+                }
+                $request->validate([
+                    'uwl_id' => 'required|numeric',
+                ],[
+                    'uwl_id.required' => 'Something went wrong! Please reload the page and try again.',
+                    'uwl_id.numeric' => 'Something went wrong! Please reload the page and try again.',
+                ]);
+                try {
+                    $url = UrlWhiteListing::where('uwl_status','!=', 'Deleted')->find($request->uwl_id);
+                    if($url){
+                        $url->uwl_status = 'Deleted';
+                        if($url->save()){
+                            return response()->json(['message' => 'URL deleted successfully.','status' => true], 200);
+                        }else{
+                            return response()->json(['message'=>'Unable to complete your request right now! Please try again later.'],400);
+                        }
+                    }else{
+                        return response()->json(['message'=>'Requested URL not found or already deleted! Please reload the page and try again.'],404);
+                    }
+                } catch (Exception $e) {
+                    $logDescription = [
+                        'message' => $e->getMessage(),
+                    ];
+                    $this->saveLog('URL White Listing Delete Exception', json_encode($logDescription), $request->ip(), $request->userAgent());
+    
+                    return response()->json(['message' => 'Something went wrong! Please check activity log for more details.'], 500);
+                }
+                break;
+            default:
+                if ($request->ajax() || $request->isXmlHttpRequest()) {
+                    return response()->json(['message' => 'Invalid request type.'], 400);
+                }
+                return redirect()->back()->with('error', 'Invalid request type.');
+        }
+    }
+
     public function merchantSettlementReportsView()
     {
         return $this->dashboardPage('merchant.settlement-report');

@@ -73,7 +73,6 @@
     $(document).ready(function() {
         $('#accountTable').DataTable();
         $(document).on('click', '.delete', function() {
-            
             Swal.fire({
                 html: `
                     <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" 

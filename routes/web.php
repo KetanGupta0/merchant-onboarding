@@ -28,6 +28,8 @@ Route::get('/merchant/account/details',[MerchantController::class,'merchantAccou
 Route::post('/merchant/account/details/update',[MerchantController::class,'merchantAccountDetailsUpdate']);
 
 Route::get('/merchant/url/whitelisting',[MerchantController::class,'merchantUrlWhitelistingView']);
+Route::post('/merchant/url/whitelisting/request-{type}',[MerchantController::class,'merchantUrlWhitelistingRequest']);
+
 Route::get('/merchant/settlement/report',[MerchantController::class,'merchantSettlementReportsView']);
 Route::get('/merchant/settings',[MerchantController::class,'merchantSettingsView']);
 Route::post('/merchant/settings/update',[MerchantController::class,'merchantSettingsUpdate']);
@@ -53,6 +55,10 @@ Route::get('/admin/account/details/status/{status}-{id}',[AdminController::class
 Route::post('/admin/account/details/update',[AdminController::class,'adminAccountDetailsUpdate']);
 
 Route::get('/admin/url/whitelisting',[AdminController::class,'adminUrlWhitelistingView']);
+Route::get('/admin/url/whitelisting/request-active-{id}',[AdminController::class,'adminUrlWhitelistingRequestActive']);
+Route::get('/admin/url/whitelisting/request-inactive{id}',[AdminController::class,'adminUrlWhitelistingRequestInactive']);
+Route::get('/admin/url/whitelisting/request-delete-{id}',[AdminController::class,'adminUrlWhitelistingRequestDelete']);
+
 Route::get('/admin/settlement/report',[AdminController::class,'adminSettlementReportsView']);
 
 Route::get('/admin/settings',[AdminController::class,'adminSettingsView']);
